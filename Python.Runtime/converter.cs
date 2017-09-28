@@ -533,16 +533,6 @@ class GMT(tzinfo):
                 return false;
             }
 
-//<<<<<<< HEAD:Python.Runtime/converter.cs
-//MASTER            TypeCode typeCode = Type.GetTypeCode(obType);
-//MASTER            if (typeCode == TypeCode.Object)
-//MASTER            {
-//MASTER                IntPtr pyType = Runtime.PyObject_TYPE(value);
-//MASTER                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
-//MASTER                {
-//MASTER                    return true;
-//MASTER                }
-//=======
             var underlyingType = Nullable.GetUnderlyingType(obType);
             if (underlyingType != null)
             {
@@ -1037,16 +1027,9 @@ class GMT(tzinfo):
         private static bool ToArray(IntPtr value, Type obType, out object result, bool setError)
         {
             Type elementType = obType.GetElementType();
+            var size = Runtime.PySequence_Size(value);
             result = null;
 
-//<<<<<<< HEAD:Python.Runtime/converter.cs
-//MASTER            bool IsSeqObj = Runtime.PySequence_Check(value);
-//MASTER            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
-//MASTER
-//MASTER            IntPtr IterObject = Runtime.PyObject_GetIter(value);
-//MASTER
-//MASTER            if(IterObject==IntPtr.Zero) {
-//=======
             if (size < 0 || elementType.IsGenericType)
             {
                 if (setError)

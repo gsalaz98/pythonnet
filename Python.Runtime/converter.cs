@@ -310,6 +310,21 @@ class GMT(tzinfo):
                     Runtime.XDecref(dateTimeArgs);
                     return returnDateTime;
 
+                case TypeCode.DateTime:
+                    var datetime = (DateTime)value;
+                    
+                    IntPtr dateTimeArgs = Runtime.PyTuple_New(8);
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 0, Runtime.PyInt_FromInt32(datetime.Year));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 1, Runtime.PyInt_FromInt32(datetime.Month));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 2, Runtime.PyInt_FromInt32(datetime.Day));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 3, Runtime.PyInt_FromInt32(datetime.Hour));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 4, Runtime.PyInt_FromInt32(datetime.Minute));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 5, Runtime.PyInt_FromInt32(datetime.Second));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 6, Runtime.PyInt_FromInt32(datetime.Millisecond));
+                    Runtime.PyTuple_SetItem(dateTimeArgs, 7, TzInfo(datetime.Kind));
+
+                    return Runtime.PyObject_CallObject(dateTimeCtor, dateTimeArgs);
+
                 default:
                     if (value is IEnumerable)
                     {

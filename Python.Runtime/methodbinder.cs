@@ -507,8 +507,11 @@ namespace Python.Runtime
                     }
                     if (!typematch)
                     {
+                        // this takes care of nullables
+                        var underlyingType = Nullable.GetUnderlyingType(parameterType) ?? parameterType;
+
                         // this takes care of enum values
-                        TypeCode argtypecode = Type.GetTypeCode(parameterType);
+                        TypeCode argtypecode = Type.GetTypeCode(underlyingType);
                         TypeCode paramtypecode = Type.GetTypeCode(clrtype);
                         if (argtypecode == paramtypecode)
                         {

@@ -444,14 +444,20 @@ namespace Python.Runtime
                 return false;
             }
 
-            TypeCode typeCode = Type.GetTypeCode(obType);
-            if (typeCode == TypeCode.Object)
+//<<<<<<< HEAD:Python.Runtime/converter.cs
+//MASTER            TypeCode typeCode = Type.GetTypeCode(obType);
+//MASTER            if (typeCode == TypeCode.Object)
+//MASTER            {
+//MASTER                IntPtr pyType = Runtime.PyObject_TYPE(value);
+//MASTER                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
+//MASTER                {
+//MASTER                    return true;
+//MASTER                }
+//=======
+            var underlyingType = Nullable.GetUnderlyingType(obType);
+            if (underlyingType != null)
             {
-                IntPtr pyType = Runtime.PyObject_TYPE(value);
-                if (PyObjectConversions.TryDecode(value, pyType, obType, out result))
-                {
-                    return true;
-                }
+                return ToManagedValue(value, underlyingType, out result, setError);
             }
 
             return ToPrimitive(value, obType, out result, setError);
@@ -880,12 +886,16 @@ namespace Python.Runtime
             Type elementType = obType.GetElementType();
             result = null;
 
-            bool IsSeqObj = Runtime.PySequence_Check(value);
-            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
-
-            IntPtr IterObject = Runtime.PyObject_GetIter(value);
-
-            if(IterObject==IntPtr.Zero) {
+//<<<<<<< HEAD:Python.Runtime/converter.cs
+//MASTER            bool IsSeqObj = Runtime.PySequence_Check(value);
+//MASTER            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
+//MASTER
+//MASTER            IntPtr IterObject = Runtime.PyObject_GetIter(value);
+//MASTER
+//MASTER            if(IterObject==IntPtr.Zero) {
+//=======
+            if (size < 0 || elementType.IsGenericType)
+            {
                 if (setError)
                 {
                     SetConversionError(value, obType);

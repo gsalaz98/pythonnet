@@ -267,6 +267,8 @@ class BuildExtPythonnet(build_ext.build_ext):
             subprocess.check_call(" ".join(cmd + ['"/t:Console:publish;Python_EmbeddingTest:publish"', "/p:TargetFramework=netcoreapp2.2"]), shell=use_shell)
         if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
+        if DEVTOOLS == "dotnet":
+            self._build_coreclr()
 
     def _get_manifest(self, build_dir):
         if DEVTOOLS != "MsDev" and DEVTOOLS != "MsDev15":
@@ -302,6 +304,19 @@ class BuildExtPythonnet(build_ext.build_ext):
             ],
             extra_compile_args=cflags.split(" "),
             extra_link_args=libs.split(" ")
+        )
+
+        build_ext.build_ext.build_extension(self, clr_ext)
+
+    def _build_coreclr(self):
+        # build the clr python module
+        clr_ext = Extension(
+            "clr",
+            sources=[
+                 "src/coreclr/pynetinit.c",
+                 "src/coreclr/clrmod.c",
+                 "src/coreclr/coreutils.c",
+            ],
         )
 
         build_ext.build_ext.build_extension(self, clr_ext)

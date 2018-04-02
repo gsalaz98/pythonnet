@@ -237,7 +237,15 @@ namespace Python.Runtime
                 () => PyFloatType = IntPtr.Zero);
             XDecref(op);
 
-#if !PYTHON2
+            IntPtr decimalMod = PyImport_ImportModule("decimal");
+            IntPtr decimalCtor = PyObject_GetAttrString(decimalMod, "Decimal");
+            op = PyObject_CallObject(decimalCtor, IntPtr.Zero);
+            PyDecimalType = PyObject_Type(op);
+            XDecref(op);
+            XDecref(decimalMod);
+            XDecref(decimalCtor);
+
+#if PYTHON3
             PyClassType = IntPtr.Zero;
             PyInstanceType = IntPtr.Zero;
 #else
@@ -403,6 +411,7 @@ namespace Python.Runtime
         internal static IntPtr PyBoolType;
         internal static IntPtr PyNoneType;
         internal static IntPtr PyTypeType;
+        internal static IntPtr PyDecimalType;
 
         internal static IntPtr Py_NoSiteFlag;
 

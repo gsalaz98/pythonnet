@@ -190,6 +190,7 @@
     <Compile Include="TestPyTuple.cs" />
     <Compile Include="TestNamedArguments.cs" />
     <Compile Include="TestPyWith.cs" />
+    <Compile Include="TestQuantConnectCommonTypes.cs" />
     <Compile Include="TestRuntime.cs" />
     <Compile Include="TestPyScope.cs" />
   </ItemGroup>
@@ -197,10 +198,19 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Python.QuantConnect.Runtime\Python.QuantConnect.Runtime.csproj">
+      <Project>{27bade95-4912-49ba-8214-e6ed1e4d5ece}</Project>
+      <Name>Python.QuantConnect.Runtime</Name>
+    </ProjectReference>
     <ProjectReference Include="..\runtime\Python.Runtime.csproj">
       <Project>{097b4ac0-74e9-4c58-bcf8-c69746ec8271}</Project>
       <Name>Python.Runtime</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="quantconnect.common.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
   <PropertyGroup>

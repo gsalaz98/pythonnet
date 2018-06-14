@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -18,22 +19,24 @@ namespace Python.Runtime
         {
         }
 
-        private static NumberFormatInfo nfi;
-        private static Type objectType;
-        private static Type stringType;
-        private static Type singleType;
-        private static Type doubleType;
-        private static Type decimalType;
-        private static Type int16Type;
-        private static Type int32Type;
-        private static Type int64Type;
-        private static Type flagsType;
-        private static Type boolType;
-        private static Type typeType;
-        private static IntPtr decimalCtor;
-        private static IntPtr dateTimeCtor;
-        private static IntPtr timeSpanCtor;
-        private static IntPtr tzInfoCtor;
+        private static readonly NumberFormatInfo nfi;
+        private static readonly Type objectType;
+        private static readonly Type stringType;
+        private static readonly Type singleType;
+        private static readonly Type doubleType;
+        private static readonly Type decimalType;
+        private static readonly Type int16Type;
+        private static readonly Type int32Type;
+        private static readonly Type int64Type;
+        private static readonly Type flagsType;
+        private static readonly Type boolType;
+        private static readonly Type typeType;
+        private static readonly IntPtr decimalCtor;
+        private static readonly IntPtr dateTimeCtor;
+        private static readonly IntPtr timeSpanCtor;
+        private static readonly IntPtr tzInfoCtor;
+
+        public static readonly Dictionary<Type, IObjectConverter> ObjectConverters = new Dictionary<Type, IObjectConverter>();
 
         static Converter()
         {
@@ -55,13 +58,13 @@ namespace Python.Runtime
 
             IntPtr dateTimeMod = Runtime.PyImport_ImportModule("datetime");
             if (dateTimeMod == null) throw new PythonException();
-            
+
             decimalCtor = Runtime.PyObject_GetAttrString(decimalMod, "Decimal");
             if (decimalCtor == null) throw new PythonException();
-            
+
             dateTimeCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "datetime");
             if (dateTimeCtor == null) throw new PythonException();
-            
+
             timeSpanCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "timedelta");
             if (timeSpanCtor == null) throw new PythonException();
 
@@ -218,6 +221,11 @@ namespace Python.Runtime
             switch (tc)
             {
                 case TypeCode.Object:
+                    if (type.FullName == "QuantConnect.Data.Market.TradeBar")
+                    {
+                        return QuantConnectRuntime.TradeBarToPython(value);
+                    }
+
                     if (value is TimeSpan)
                     {
                         var timespan = (TimeSpan)value;
@@ -283,12 +291,12 @@ namespace Python.Runtime
                     IntPtr d2p = Runtime.PyString_FromString(d2s);
                     IntPtr decimalArgs = Runtime.PyTuple_New(1);
                     Runtime.PyTuple_SetItem(decimalArgs, 0, d2p);
-                    
+
                     return Runtime.PyObject_CallObject(decimalCtor, decimalArgs);
 
                 case TypeCode.DateTime:
                     var datetime = (DateTime)value;
-                    
+
                     IntPtr dateTimeArgs = Runtime.PyTuple_New(8);
                     Runtime.PyTuple_SetItem(dateTimeArgs, 0, Runtime.PyInt_FromInt32(datetime.Year));
                     Runtime.PyTuple_SetItem(dateTimeArgs, 1, Runtime.PyInt_FromInt32(datetime.Month));
@@ -1076,6 +1084,11 @@ namespace Python.Runtime
         public static PyObject ToPython(this object o)
         {
             return new PyObject(Converter.ToPython(o, o?.GetType()));
+        }
+
+        public static IntPtr ToPythonHandle(this object o)
+        {
+            return new PyObject(Converter.ToPython(o, o?.GetType())).Handle;
         }
     }
 }

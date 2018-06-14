@@ -7,7 +7,7 @@ import sys
 import System
 import pytest
 
-from ._compat import PY2, PY3, pickle, text_type
+from _compat import PY2, PY3, pickle, text_type
 
 
 def test_unified_exception_semantics():

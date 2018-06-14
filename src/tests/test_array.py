@@ -6,7 +6,7 @@ import Python.Test as Test
 import System
 import pytest
 
-from ._compat import PY2, UserList, long, range, unichr
+from _compat import PY2, UserList, long, range, unichr
 
 
 def test_public_array():

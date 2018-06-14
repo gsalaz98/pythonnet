@@ -5,7 +5,7 @@
 import Python.Test as Test
 import pytest
 
-from ._compat import long, unichr
+from _compat import long, unichr
 
 
 def test_public_indexer():

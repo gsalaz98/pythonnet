@@ -5,8 +5,8 @@
 import pytest
 from Python.Test import EventTest, EventArgsTest
 
-from ._compat import range
-from .utils import (CallableHandler, ClassMethodHandler, GenericHandler,
+from _compat import range
+from utils import (CallableHandler, ClassMethodHandler, GenericHandler,
                     MultipleHandler, StaticMethodHandler, VarCallableHandler,
                     VariableArgsHandler)
 

@@ -8,7 +8,7 @@ from __future__ import print_function
 import sys
 import pytest
 
-from ._compat import input
+from _compat import input
 
 try:
     import System
@@ -30,7 +30,7 @@ def main(verbosity=1):
 
     # FIXME: test_engine has tests that are being skipped.
     # FIXME: test_subclass has tests that are being skipped.
-    pytest.main()
+    pytest.main("--verbose")
 
 
 if __name__ == '__main__':

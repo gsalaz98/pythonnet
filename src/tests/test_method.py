@@ -6,7 +6,7 @@ import System
 import pytest
 from Python.Test import MethodTest
 
-from ._compat import PY2, long, unichr
+from _compat import PY2, long, unichr
 
 
 def test_instance_method_descriptor():

@@ -4,7 +4,7 @@
 
 import sys
 
-from ._compat import check_output
+from _compat import check_output
 
 
 def test_sys_argv_state(filepath):

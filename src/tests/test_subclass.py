@@ -12,7 +12,7 @@ from Python.Test import (IInterfaceTest, SubClassTest, EventArgsTest,
                          FunctionsTest)
 from System.Collections.Generic import List
 
-from ._compat import range
+from _compat import range
 
 
 def interface_test_class_fixture(subnamespace):

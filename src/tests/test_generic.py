@@ -7,7 +7,7 @@ import clr
 import System
 import pytest
 
-from ._compat import PY2, long, unicode, unichr, zip
+from _compat import PY2, long, unicode, unichr, zip
 
 
 def assert_generic_wrapper_by_type(ptype, value):

@@ -10,8 +10,8 @@ import sys
 
 import System
 
-from ._compat import range
-from .utils import (CallableHandler, ClassMethodHandler, GenericHandler,
+from _compat import range
+from utils import (CallableHandler, ClassMethodHandler, GenericHandler,
                     HelloClass, StaticMethodHandler, VarCallableHandler,
                     VariableArgsHandler, hello_func)
 

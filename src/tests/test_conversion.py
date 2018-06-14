@@ -6,7 +6,7 @@ import System
 import pytest
 from Python.Test import ConversionTest
 
-from ._compat import indexbytes, long, unichr
+from _compat import indexbytes, long, unichr
 
 
 def test_bool_conversion():

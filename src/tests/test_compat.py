@@ -7,8 +7,8 @@ import types
 
 import pytest
 
-from ._compat import ClassType, PY2, PY3, range
-from .utils import is_clr_class, is_clr_module, is_clr_root_module
+from _compat import ClassType, PY2, PY3, range
+from utils import is_clr_class, is_clr_module, is_clr_root_module
 
 
 # Tests for old-style CLR-prefixed module naming.

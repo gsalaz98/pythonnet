@@ -5,8 +5,8 @@
 import threading
 import time
 
-from ._compat import range, thread
-from .utils import dprint
+from _compat import range, thread
+from utils import dprint
 
 
 def test_simple_callback_to_python():

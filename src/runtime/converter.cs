@@ -55,13 +55,13 @@ namespace Python.Runtime
 
             IntPtr dateTimeMod = Runtime.PyImport_ImportModule("datetime");
             if (dateTimeMod == null) throw new PythonException();
-            
+
             decimalCtor = Runtime.PyObject_GetAttrString(decimalMod, "Decimal");
             if (decimalCtor == null) throw new PythonException();
-            
+
             dateTimeCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "datetime");
             if (dateTimeCtor == null) throw new PythonException();
-            
+
             timeSpanCtor = Runtime.PyObject_GetAttrString(dateTimeMod, "timedelta");
             if (timeSpanCtor == null) throw new PythonException();
 

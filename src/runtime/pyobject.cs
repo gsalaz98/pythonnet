@@ -100,7 +100,7 @@ namespace Python.Runtime
             }
             return result;
         }
-        
+
         /// <summary>
         /// As Method
         /// </summary>
@@ -1028,32 +1028,29 @@ namespace Python.Runtime
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
-            if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
+            // test TestPyObject.AccessingUndefined* behaves the same before and after this change
+            // the worst that happens is we throw an exception, which would happen anyway when dynamic can't bind to a member
+            //if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
+
+            PyTuple pyargs = null;
+            PyDict kwargs = null;
+            try
             {
-                PyTuple pyargs = null;
-                PyDict kwargs = null;
-                try
-                {
-                    GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
-                    result = CheckNone(InvokeMethod(binder.Name, pyargs, kwargs));
-                }
-                finally
-                {
-                    if (null != pyargs)
-                    {
-                        pyargs.Dispose();
-                    }
-                    if (null != kwargs)
-                    {
-                        kwargs.Dispose();
-                    }
-                }
-                return true;
+                GetArgs(args, binder.CallInfo, out pyargs, out kwargs);
+                result = CheckNone(InvokeMethod(binder.Name, pyargs, kwargs));
             }
-            else
+            finally
             {
-                return base.TryInvokeMember(binder, args, out result);
+                if (null != pyargs)
+                {
+                    pyargs.Dispose();
+                }
+                if (null != kwargs)
+                {
+                    kwargs.Dispose();
+                }
             }
+            return true;
         }
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)

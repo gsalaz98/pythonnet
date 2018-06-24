@@ -56,6 +56,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 -   Added support for C# types to provide `__repr__` ([#680][p680])
 
 ### Changed
+-   PythonException included C# call stack
 
 -   PythonException included C# call stack
 -   Reattach python exception traceback information (#545)

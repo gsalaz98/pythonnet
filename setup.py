@@ -55,9 +55,11 @@ with open("README.rst", "r") as f:
 
 setup(
     name="pythonnet",
-    version="2.5.0",
-    description=".NET and Mono integration for Python",
-    author="The Python for .NET developers",
+    version="1.0.5.12",
+    description=".Net and Mono integration for Python",
+    url='https://pythonnet.github.io/',
+    license='MIT',
+    author="The Python for .Net developers",
     author_email="pythondotnet@python.org",
     long_description=long_description,
     license="MIT",

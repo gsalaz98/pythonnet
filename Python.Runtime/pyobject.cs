@@ -224,6 +224,11 @@ namespace Python.Runtime
             GC.SuppressFinalize(this);
         }
 
+        public IntPtr[] GetTrackedHandles()
+        {
+            return new IntPtr[] { obj };
+        }
+
         /// <summary>
         /// GetPythonType Method
         /// </summary>

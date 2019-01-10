@@ -1027,8 +1027,19 @@ namespace Python.Runtime
             return ptr;
         }
 
+        static public Dictionary<string, int> Dict = new Dictionary<string, int>();
+
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
+            if (Dict.ContainsKey(binder.Name))
+            {
+                Dict[binder.Name]++;
+            }
+            else
+            {
+                Dict.Add(binder.Name, 1);
+            }
+
             if (this.HasAttr(binder.Name) && this.GetAttr(binder.Name).IsCallable())
             {
                 PyTuple pyargs = null;

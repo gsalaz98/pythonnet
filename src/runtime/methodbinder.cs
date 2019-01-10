@@ -504,6 +504,24 @@ namespace Python.Runtime
                         target = co.inst;
                     }
 
+                    if (PyObject.Dict.ContainsKey(mi.Name))
+                    {
+                        PyObject.Dict[mi.Name]++;
+                    }
+                    else
+                    {
+                        PyObject.Dict.Add(mi.Name, 1);
+                    }
+                    if (mi.Name.Contains("Log"))
+                    {
+                        ;
+                    }
+                    if (mi.Name.Contains("EndOfAlgorithm"))
+                    {
+                        //var sortedDict = from x in PyObject.Dict orderby x.Value descending select $"{x.Key},{x.Value}";
+                        //System.IO.File.WriteAllText("Invoke.txt", string.Join(Environment.NewLine, sortedDict));
+                    }
+
                     return new Binding(mi, target, margs, outs);
                 }
             }
@@ -532,7 +550,7 @@ namespace Python.Runtime
 
         internal virtual IntPtr Invoke(IntPtr inst, IntPtr args, IntPtr kw, MethodBase info, MethodInfo[] methodinfo)
         {
-            Binding binding = Bind(inst, args, kw, info, methodinfo);
+            Binding binding = Bind(inst, args, kw, info, methodinfo);           
             object result;
             IntPtr ts = IntPtr.Zero;
 

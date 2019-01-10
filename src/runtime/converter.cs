@@ -156,6 +156,18 @@ class GMT(tzinfo):
 
         internal static IntPtr ToPython(object value, Type type)
         {
+            var outType = Type.GetTypeCode(type) == TypeCode.Object && value != null
+                ? value.GetType()
+                : type;
+
+            if (PyObject.Dict.ContainsKey(outType.Name))
+            {
+                PyObject.Dict[outType.Name]++;
+            }
+            else
+            {
+                PyObject.Dict.Add(outType.Name, 1);
+            }
             if (value is PyObject)
             {
                 IntPtr handle = ((PyObject)value).Handle;

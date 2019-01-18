@@ -170,7 +170,7 @@ namespace Python.Runtime
                 Exceptions.Clear();
 
                 // Make sure we clean up properly on app domain unload.
-                AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+                // AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
                 // Remember to shut down the runtime.
                 AddShutdownHandler(Runtime.Shutdown);

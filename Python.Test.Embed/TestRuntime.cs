@@ -8,6 +8,7 @@ namespace Python.EmbeddingTest
 {
     public class TestRuntime
     {
+<<<<<<< HEAD:Python.Test.Embed/TestRuntime.cs
         [OneTimeSetUp]
         public void SetUp()
         {
@@ -42,6 +43,12 @@ namespace Python.EmbeddingTest
         public static void Py_IsInitializedValue()
         {
             Runtime.Runtime.Py_Finalize();
+=======
+        [Test]
+        public static void Py_IsInitializedValue()
+        {
+            Runtime.Runtime.Py_Finalize(); // In case another test left it on.
+>>>>>>> Revert "Rebase to pythonnet master":src/embed_tests/TestRuntime.cs
             Assert.AreEqual(0, Runtime.Runtime.Py_IsInitialized());
             Runtime.Runtime.Py_Initialize();
             Assert.AreEqual(1, Runtime.Runtime.Py_IsInitialized());

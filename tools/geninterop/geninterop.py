@@ -178,8 +178,7 @@ def preprocess_python_headers():
         "-D", "__attribute__(x)=",
         "-D", "__inline__=inline",
         "-D", "__asm__=;#pragma asm",
-        "-D", "__int64=long long",
-        "-D", "_POSIX_THREADS"
+        "-D", "__int64=long long"
     ]
 
     if os.name == 'nt':
@@ -198,7 +197,7 @@ def preprocess_python_headers():
             defines.extend(("-D", "PYTHON_WITH_WIDE_UNICODE"))
 
     python_h = os.path.join(include_py, "Python.h")
-    cmd = ["clang", "-pthread", "-I"] + include_dirs + defines + ["-E", python_h]
+    cmd = ["clang", "-I"] + include_dirs + defines + ["-E", python_h]
 
     # normalize as the parser doesn't like windows line endings.
     lines = []

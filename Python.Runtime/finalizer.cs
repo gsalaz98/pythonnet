@@ -169,24 +169,27 @@ namespace Python.Runtime
             lock (_queueLock)
 #endif
             {
-#if FINALIZER_CHECK
-                ValidateRefCount();
-#endif
-                IPyDisposable obj;
-                while (_objQueue.TryDequeue(out obj))
+                using (Py.GIL())
                 {
-                    try
+#if FINALIZER_CHECK
+                    ValidateRefCount();
+#endif
+                    IPyDisposable obj;
+                    while (_objQueue.TryDequeue(out obj))
                     {
-                        obj.Dispose();
-                        Runtime.CheckExceptionOccurred();
-                    }
-                    catch (Exception e)
-                    {
-                        // We should not bother the main thread
-                        ErrorHandler?.Invoke(this, new ErrorArgs()
+                        try
                         {
-                            Error = e
-                        });
+                            obj.Dispose();
+                            Runtime.CheckExceptionOccurred();
+                        }
+                        catch (Exception e)
+                        {
+                            // We should not bother the main thread
+                            ErrorHandler?.Invoke(this, new ErrorArgs()
+                            {
+                                Error = e
+                            });
+                        }
                     }
                 }
             }

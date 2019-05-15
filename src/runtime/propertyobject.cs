@@ -18,7 +18,6 @@ namespace Python.Runtime
         private Func<object, object> getterCache;
         private Action<object, object> setterCache;
 
-        [StrongNameIdentityPermission(SecurityAction.Assert)]
         public PropertyObject(PropertyInfo md)
         {
             getter = md.GetGetMethod(true);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -7,7 +8,7 @@ using System.Threading;
 namespace Python.Runtime
 {
     [SuppressUnmanagedCodeSecurity]
-    internal static class NativeMethods
+    public static class NativeMethods
     {
 #if MONO_LINUX || MONO_OSX
 #if NETSTANDARD
@@ -188,23 +189,85 @@ namespace Python.Runtime
         public static readonly int pyversionnumber = Convert.ToInt32(_pyver);
 
         // set to true when python is finalizing
-        internal static object IsFinalizingLock = new object();
-        internal static bool IsFinalizing;
+        public static object IsFinalizingLock = new object();
+        public static bool IsFinalizing;
 
-        internal static bool Is32Bit = IntPtr.Size == 4;
+        public static bool Is32Bit = IntPtr.Size == 4;
 
         // .NET core: System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-        internal static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+        public static bool IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
-        internal static bool IsPython2 = pyversionnumber < 30;
-        internal static bool IsPython3 = pyversionnumber >= 30;
+        /// <summary>
+        /// Operating system type as reported by Python.
+        /// </summary>
+        public enum OperatingSystemType
+        {
+            Windows,
+            Darwin,
+            Linux,
+            Other
+        }
+
+        static readonly Dictionary<string, OperatingSystemType> OperatingSystemTypeMapping = new Dictionary<string, OperatingSystemType>()
+        {
+            { "Windows", OperatingSystemType.Windows },
+            { "Darwin", OperatingSystemType.Darwin },
+            { "Linux", OperatingSystemType.Linux },
+        };
+
+        /// <summary>
+        /// Gets the operating system as reported by python's platform.system().
+        /// </summary>
+        public static OperatingSystemType OperatingSystem { get; private set; }
+
+        /// <summary>
+        /// Gets the operating system as reported by python's platform.system().
+        /// </summary>
+        public static string OperatingSystemName { get; private set; }
+
+        public enum MachineType
+        {
+            i386,
+            x86_64,
+            Other
+        };
+
+        /// <summary>
+        /// Map lower-case version of the python machine name to the processor
+        /// type. There are aliases, e.g. x86_64 and amd64 are two names for
+        /// the same thing. Make sure to lower-case the search string, because
+        /// capitalization can differ.
+        /// </summary>
+        static readonly Dictionary<string, MachineType> MachineTypeMapping = new Dictionary<string, MachineType>()
+        {
+            ["i386"] = MachineType.i386,
+            ["i686"] = MachineType.i386,
+            ["x86"] = MachineType.i386,
+            ["x86_64"] = MachineType.x86_64,
+            ["amd64"] = MachineType.x86_64,
+            ["x64"] = MachineType.x86_64,
+            ["em64t"] = MachineType.x86_64,
+        };
+
+        /// <summary>
+        /// Gets the machine architecture as reported by python's platform.machine().
+        /// </summary>
+        public static MachineType Machine { get; private set; }/* set in Initialize using python's platform.machine */
+
+        /// <summary>
+        /// Gets the machine architecture as reported by python's platform.machine().
+        /// </summary>
+        public static string MachineName { get; private set; }
+
+        public static bool IsPython2 = pyversionnumber < 30;
+        public static bool IsPython3 = pyversionnumber >= 30;
 
         public static int MainManagedThreadId { get; private set; }
 
         /// <summary>
         /// Encoding to use to convert Unicode to/from Managed to Native
         /// </summary>
-        internal static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
+        public static readonly Encoding PyEncoding = _UCS == 2 ? Encoding.Unicode : Encoding.UTF32;
 
         /// <summary>
         /// Initialize the runtime...
@@ -375,7 +438,7 @@ namespace Python.Runtime
         }
 
         // called *without* the GIL acquired by clr._AtExit
-        internal static int AtExit()
+        public static int AtExit()
         {
             lock (IsFinalizingLock)
             {
@@ -409,12 +472,13 @@ namespace Python.Runtime
         internal static IntPtr PyTypeType;
         internal static IntPtr PyDecimalType;
 
-#if PYTHON3
-        internal static IntPtr PyBytesType;
-#endif
-        internal static IntPtr _PyObject_NextNotImplemented;
 
-        internal static IntPtr PyNotImplemented;
+#if PYTHON3
+        public static IntPtr PyBytesType;
+#endif
+        public static IntPtr _PyObject_NextNotImplemented;
+
+        public static IntPtr PyNotImplemented;
         internal const int Py_LT = 0;
         internal const int Py_LE = 1;
         internal const int Py_EQ = 2;
@@ -422,10 +486,10 @@ namespace Python.Runtime
         internal const int Py_GT = 4;
         internal const int Py_GE = 5;
 
-        internal static IntPtr PyTrue;
-        internal static IntPtr PyFalse;
-        internal static IntPtr PyNone;
-        internal static IntPtr Error;
+        public static IntPtr PyTrue;
+        public static IntPtr PyFalse;
+        public static IntPtr PyNone;
+        public static IntPtr Error;
 
         /// <summary>
         /// Check if any Python Exceptions occurred.
@@ -434,7 +498,7 @@ namespace Python.Runtime
         /// <remarks>
         /// Can be used instead of `obj == IntPtr.Zero` for example.
         /// </remarks>
-        internal static void CheckExceptionOccurred()
+        public static void CheckExceptionOccurred()
         {
             if (PyErr_Occurred() != 0)
             {
@@ -442,7 +506,7 @@ namespace Python.Runtime
             }
         }
 
-        internal static IntPtr ExtendTuple(IntPtr t, params IntPtr[] args)
+        public static IntPtr ExtendTuple(IntPtr t, params IntPtr[] args)
         {
             int size = PyTuple_Size(t);
             int add = args.Length;
@@ -466,12 +530,12 @@ namespace Python.Runtime
             return items;
         }
 
-        internal static Type[] PythonArgsToTypeArray(IntPtr arg)
+        public static Type[] PythonArgsToTypeArray(IntPtr arg)
         {
             return PythonArgsToTypeArray(arg, false);
         }
 
-        internal static Type[] PythonArgsToTypeArray(IntPtr arg, bool mangleObjects)
+        public static Type[] PythonArgsToTypeArray(IntPtr arg, bool mangleObjects)
         {
             // Given a PyObject * that is either a single type object or a
             // tuple of (managed or unmanaged) type objects, return a Type[]
@@ -536,7 +600,7 @@ namespace Python.Runtime
         /// some optimization to avoid managed &lt;--&gt; unmanaged transitions
         /// (mostly for heavily used methods).
         /// </summary>
-        internal static unsafe void XIncref(IntPtr op)
+        public static unsafe void XIncref(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG || NETSTANDARD
             Py_IncRef(op);
@@ -557,7 +621,7 @@ namespace Python.Runtime
 #endif
         }
 
-        internal static unsafe void XDecref(IntPtr op)
+        public static unsafe void XDecref(IntPtr op)
         {
 #if PYTHON_WITH_PYDEBUG || NETSTANDARD
             Py_DecRef(op);
@@ -594,7 +658,7 @@ namespace Python.Runtime
 #endif
         }
 
-        internal static unsafe long Refcount(IntPtr op)
+        public static unsafe long Refcount(IntPtr op)
         {
             var p = (void*)op;
             if ((void*)0 == p)
@@ -610,7 +674,7 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="ob">PyObject Ptr</param>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_IncRef(IntPtr ob);
+        public static extern void Py_IncRef(IntPtr ob);
 
         /// <summary>
         /// Export of Macro Py_XDecRef. Use XDecref instead.
@@ -618,50 +682,51 @@ namespace Python.Runtime
         /// </summary>
         /// <param name="ob">PyObject Ptr</param>
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_DecRef(IntPtr ob);
+        public static extern void Py_DecRef(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_Initialize();
+        public static extern void Py_Initialize();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_IsInitialized();
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_Finalize();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_NewInterpreter();
+        public static extern void Py_Finalize();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_EndInterpreter(IntPtr threadState);
+        public static extern IntPtr Py_NewInterpreter();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyThreadState_New(IntPtr istate);
+        public static extern void Py_EndInterpreter(IntPtr threadState);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyThreadState_Get();
+        public static extern IntPtr PyThreadState_New(IntPtr istate);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyThread_get_key_value(IntPtr key);
+        public static extern IntPtr PyThreadState_Get();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyThread_get_thread_ident();
+        public static extern IntPtr PyThread_get_key_value(IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyThread_set_key_value(IntPtr key, IntPtr value);
+        public static extern int PyThread_get_thread_ident();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyThreadState_Swap(IntPtr key);
+        public static extern int PyThread_set_key_value(IntPtr key, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyGILState_Ensure();
+        public static extern IntPtr PyThreadState_Swap(IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyGILState_Release(IntPtr gs);
+        public static extern IntPtr PyGILState_Ensure();
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void PyGILState_Release(IntPtr gs);
 
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyGILState_GetThisThreadState();
+        public static extern IntPtr PyGILState_GetThisThreadState();
 
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
@@ -675,103 +740,103 @@ namespace Python.Runtime
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyEval_InitThreads();
+        public static extern void PyEval_InitThreads();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyEval_ThreadsInitialized();
+        public static extern int PyEval_ThreadsInitialized();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyEval_AcquireLock();
+        public static extern void PyEval_AcquireLock();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyEval_ReleaseLock();
+        public static extern void PyEval_ReleaseLock();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyEval_AcquireThread(IntPtr tstate);
+        public static extern void PyEval_AcquireThread(IntPtr tstate);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyEval_ReleaseThread(IntPtr tstate);
+        public static extern void PyEval_ReleaseThread(IntPtr tstate);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyEval_SaveThread();
+        public static extern IntPtr PyEval_SaveThread();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyEval_RestoreThread(IntPtr tstate);
+        public static extern void PyEval_RestoreThread(IntPtr tstate);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyEval_GetBuiltins();
+        public static extern IntPtr PyEval_GetBuiltins();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyEval_GetGlobals();
+        public static extern IntPtr PyEval_GetGlobals();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyEval_GetLocals();
+        public static extern IntPtr PyEval_GetLocals();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetProgramName();
+        public static extern IntPtr Py_GetProgramName();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_SetProgramName(IntPtr name);
+        public static extern void Py_SetProgramName(IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetPythonHome();
+        public static extern IntPtr Py_GetPythonHome();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_SetPythonHome(IntPtr home);
+        public static extern void Py_SetPythonHome(IntPtr home);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetPath();
+        public static extern IntPtr Py_GetPath();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Py_SetPath(IntPtr home);
+        public static extern void Py_SetPath(IntPtr home);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetVersion();
+        public static extern IntPtr Py_GetVersion();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetPlatform();
+        public static extern IntPtr Py_GetPlatform();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetCopyright();
+        public static extern IntPtr Py_GetCopyright();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetCompiler();
+        public static extern IntPtr Py_GetCompiler();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_GetBuildInfo();
+        public static extern IntPtr Py_GetBuildInfo();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyRun_SimpleString(string code);
+        public static extern int PyRun_SimpleString(string code);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyRun_String(string code, IntPtr st, IntPtr globals, IntPtr locals);
+        public static extern IntPtr PyRun_String(string code, IntPtr st, IntPtr globals, IntPtr locals);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
+        public static extern IntPtr PyEval_EvalCode(IntPtr co, IntPtr globals, IntPtr locals);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr Py_CompileString(string code, string file, IntPtr tok);
+        public static extern IntPtr Py_CompileString(string code, string file, IntPtr tok);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyImport_ExecCodeModule(string name, IntPtr code);
+        public static extern IntPtr PyImport_ExecCodeModule(string name, IntPtr code);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyCFunction_NewEx(IntPtr ml, IntPtr self, IntPtr mod);
+        public static extern IntPtr PyCFunction_NewEx(IntPtr ml, IntPtr self, IntPtr mod);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyCFunction_Call(IntPtr func, IntPtr args, IntPtr kw);
+        public static extern IntPtr PyCFunction_Call(IntPtr func, IntPtr args, IntPtr kw);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyClass_New(IntPtr bases, IntPtr dict, IntPtr name);
+        public static extern IntPtr PyClass_New(IntPtr bases, IntPtr dict, IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyInstance_New(IntPtr cls, IntPtr args, IntPtr kw);
+        public static extern IntPtr PyInstance_New(IntPtr cls, IntPtr args, IntPtr kw);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyInstance_NewRaw(IntPtr cls, IntPtr dict);
+        public static extern IntPtr PyInstance_NewRaw(IntPtr cls, IntPtr dict);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyMethod_New(IntPtr func, IntPtr self, IntPtr cls);
+        public static extern IntPtr PyMethod_New(IntPtr func, IntPtr self, IntPtr cls);
 
 
         //====================================================================
@@ -783,7 +848,7 @@ namespace Python.Runtime
         /// designed to be lean and mean in IL &amp; avoid managed &lt;-&gt; unmanaged
         /// transitions. Note that this does not incref the type object.
         /// </summary>
-        internal static unsafe IntPtr PyObject_TYPE(IntPtr op)
+        public static unsafe IntPtr PyObject_TYPE(IntPtr op)
         {
             var p = (void*)op;
             if ((void*)0 == p)
@@ -805,14 +870,14 @@ namespace Python.Runtime
         /// This version avoids a managed  &lt;-&gt; unmanaged transition.
         /// This one does incref the returned type object.
         /// </summary>
-        internal static IntPtr PyObject_Type(IntPtr op)
+        public static IntPtr PyObject_Type(IntPtr op)
         {
             IntPtr tp = PyObject_TYPE(op);
             XIncref(tp);
             return tp;
         }
 
-        internal static string PyObject_GetTypeName(IntPtr op)
+        public static string PyObject_GetTypeName(IntPtr op)
         {
             IntPtr pyType = Marshal.ReadIntPtr(op, ObjectOffset.ob_type);
             IntPtr ppName = Marshal.ReadIntPtr(pyType, TypeOffset.tp_name);
@@ -822,7 +887,7 @@ namespace Python.Runtime
         /// <summary>
         /// Test whether the Python object is an iterable.
         /// </summary>
-        internal static bool PyObject_IsIterable(IntPtr pointer)
+        public static bool PyObject_IsIterable(IntPtr pointer)
         {
             var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
 #if PYTHON2
@@ -835,46 +900,46 @@ namespace Python.Runtime
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_HasAttrString(IntPtr pointer, string name);
+        public static extern int PyObject_HasAttrString(IntPtr pointer, string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GetAttrString(IntPtr pointer, string name);
+        public static extern IntPtr PyObject_GetAttrString(IntPtr pointer, string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value);
+        public static extern int PyObject_SetAttrString(IntPtr pointer, string name, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_HasAttr(IntPtr pointer, IntPtr name);
+        public static extern int PyObject_HasAttr(IntPtr pointer, IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GetAttr(IntPtr pointer, IntPtr name);
+        public static extern IntPtr PyObject_GetAttr(IntPtr pointer, IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_SetAttr(IntPtr pointer, IntPtr name, IntPtr value);
+        public static extern int PyObject_SetAttr(IntPtr pointer, IntPtr name, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GetItem(IntPtr pointer, IntPtr key);
+        public static extern IntPtr PyObject_GetItem(IntPtr pointer, IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_SetItem(IntPtr pointer, IntPtr key, IntPtr value);
+        public static extern int PyObject_SetItem(IntPtr pointer, IntPtr key, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_DelItem(IntPtr pointer, IntPtr key);
+        public static extern int PyObject_DelItem(IntPtr pointer, IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GetIter(IntPtr op);
+        public static extern IntPtr PyObject_GetIter(IntPtr op);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_Call(IntPtr pointer, IntPtr args, IntPtr kw);
+        public static extern IntPtr PyObject_Call(IntPtr pointer, IntPtr args, IntPtr kw);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_CallObject(IntPtr pointer, IntPtr args);
+        public static extern IntPtr PyObject_CallObject(IntPtr pointer, IntPtr args);
 
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_RichCompareBool(IntPtr value1, IntPtr value2, int opid);
+        public static extern int PyObject_RichCompareBool(IntPtr value1, IntPtr value2, int opid);
 
-        internal static int PyObject_Compare(IntPtr value1, IntPtr value2)
+        public static int PyObject_Compare(IntPtr value1, IntPtr value2)
         {
             int res;
             res = PyObject_RichCompareBool(value1, value2, Py_LT);
@@ -900,47 +965,48 @@ namespace Python.Runtime
         }
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_Compare(IntPtr value1, IntPtr value2);
+        public static extern int PyObject_Compare(IntPtr value1, IntPtr value2);
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_IsInstance(IntPtr ob, IntPtr type);
+        public static extern int PyObject_IsInstance(IntPtr ob, IntPtr type);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_IsSubclass(IntPtr ob, IntPtr type);
+        public static extern int PyObject_IsSubclass(IntPtr ob, IntPtr type);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyCallable_Check(IntPtr pointer);
+        public static extern int PyCallable_Check(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_IsTrue(IntPtr pointer);
+        public static extern int PyObject_IsTrue(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_Not(IntPtr pointer);
+        public static extern int PyObject_Not(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyObject_Size(IntPtr pointer);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_Hash(IntPtr op);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_Repr(IntPtr pointer);
+        public static extern IntPtr PyObject_Hash(IntPtr op);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_Str(IntPtr pointer);
+        public static extern IntPtr PyObject_Repr(IntPtr pointer);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr PyObject_Str(IntPtr pointer);
 
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyObject_Str")]
-        internal static extern IntPtr PyObject_Unicode(IntPtr pointer);
+        public static extern IntPtr PyObject_Unicode(IntPtr pointer);
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_Unicode(IntPtr pointer);
+        public static extern IntPtr PyObject_Unicode(IntPtr pointer);
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_Dir(IntPtr pointer);
+        public static extern IntPtr PyObject_Dir(IntPtr pointer);
 
 
         //====================================================================
@@ -950,38 +1016,38 @@ namespace Python.Runtime
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyNumber_Long")]
-        internal static extern IntPtr PyNumber_Int(IntPtr ob);
+        public static extern IntPtr PyNumber_Int(IntPtr ob);
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Int(IntPtr ob);
+        public static extern IntPtr PyNumber_Int(IntPtr ob);
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Long(IntPtr ob);
+        public static extern IntPtr PyNumber_Long(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Float(IntPtr ob);
+        public static extern IntPtr PyNumber_Float(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool PyNumber_Check(IntPtr ob);
+        public static extern bool PyNumber_Check(IntPtr ob);
 
-        internal static bool PyInt_Check(IntPtr ob)
+        public static bool PyInt_Check(IntPtr ob)
         {
             return PyObject_TypeCheck(ob, PyIntType);
         }
 
-        internal static bool PyBool_Check(IntPtr ob)
+        public static bool PyBool_Check(IntPtr ob)
         {
             return PyObject_TypeCheck(ob, PyBoolType);
         }
 
-        internal static IntPtr PyInt_FromInt32(int value)
+        public static IntPtr PyInt_FromInt32(int value)
         {
             var v = new IntPtr(value);
             return PyInt_FromLong(v);
         }
 
-        internal static IntPtr PyInt_FromInt64(long value)
+        public static IntPtr PyInt_FromInt64(long value)
         {
             var v = new IntPtr(value);
             return PyInt_FromLong(v);
@@ -994,152 +1060,153 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyLong_AsLong")]
-        internal static extern int PyInt_AsLong(IntPtr value);
+        public static extern int PyInt_AsLong(IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyLong_FromString")]
-        internal static extern IntPtr PyInt_FromString(string value, IntPtr end, int radix);
+        public static extern IntPtr PyInt_FromString(string value, IntPtr end, int radix);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = "PyLong_GetMax")]
-        internal static extern int PyInt_GetMax();
+        public static extern int PyInt_GetMax();
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr PyInt_FromLong(IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyInt_AsLong(IntPtr value);
+        public static extern int PyInt_AsLong(IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyInt_FromString(string value, IntPtr end, int radix);
+        public static extern IntPtr PyInt_FromString(string value, IntPtr end, int radix);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyInt_GetMax();
+        public static extern int PyInt_GetMax();
 #endif
 
-        internal static bool PyLong_Check(IntPtr ob)
+        public static bool PyLong_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyLongType;
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyLong_FromLong(long value);
+        public static extern IntPtr PyLong_FromLong(long value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyLong_FromUnsignedLong(uint value);
+        public static extern IntPtr PyLong_FromUnsignedLong(uint value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyLong_FromDouble(double value);
+        public static extern IntPtr PyLong_FromDouble(double value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyLong_FromLongLong(long value);
+        public static extern IntPtr PyLong_FromLongLong(long value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyLong_FromUnsignedLongLong(ulong value);
+        public static extern IntPtr PyLong_FromUnsignedLongLong(ulong value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyLong_FromString(string value, IntPtr end, int radix);
+        public static extern IntPtr PyLong_FromString(string value, IntPtr end, int radix);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyLong_AsLong(IntPtr value);
+        public static extern int PyLong_AsLong(IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint PyLong_AsUnsignedLong(IntPtr value);
+        public static extern uint PyLong_AsUnsignedLong(IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern long PyLong_AsLongLong(IntPtr value);
+        public static extern long PyLong_AsLongLong(IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern ulong PyLong_AsUnsignedLongLong(IntPtr value);
+        public static extern ulong PyLong_AsUnsignedLongLong(IntPtr value);
 
-        internal static bool PyFloat_Check(IntPtr ob)
+        public static bool PyFloat_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyFloatType;
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyFloat_FromDouble(double value);
+        public static extern IntPtr PyFloat_FromDouble(double value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyFloat_FromString(IntPtr value, IntPtr junk);
+        public static extern IntPtr PyFloat_FromString(IntPtr value, IntPtr junk);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern double PyFloat_AsDouble(IntPtr ob);
+        public static extern double PyFloat_AsDouble(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Add(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Add(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Subtract(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Subtract(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Multiply(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Multiply(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyNumber_Divide(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_And(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_And(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Xor(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Xor(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Or(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Or(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Lshift(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Lshift(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Rshift(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Rshift(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Power(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Power(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Remainder(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_Remainder(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceAdd(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceAdd(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceSubtract(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceSubtract(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceMultiply(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceMultiply(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyNumber_InPlaceDivide(IntPtr o1, IntPtr o2);
 
-        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceAnd(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceXor(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceAnd(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceOr(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceXor(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceLshift(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceOr(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceRshift(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceLshift(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlacePower(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlaceRshift(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_InPlaceRemainder(IntPtr o1, IntPtr o2);
+        public static extern IntPtr PyNumber_InPlacePower(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Negative(IntPtr o1);
+        public static extern IntPtr PyNumber_InPlaceRemainder(IntPtr o1, IntPtr o2);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Positive(IntPtr o1);
+        public static extern IntPtr PyNumber_Negative(IntPtr o1);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyNumber_Invert(IntPtr o1);
+        public static extern IntPtr PyNumber_Positive(IntPtr o1);
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr PyNumber_Invert(IntPtr o1);
 
 
         //====================================================================
@@ -1147,7 +1214,7 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool PySequence_Check(IntPtr pointer);
+        public static extern bool PySequence_Check(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PySequence_GetItem(IntPtr pointer, int index);
@@ -1167,59 +1234,60 @@ namespace Python.Runtime
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySequence_DelSlice(IntPtr pointer, int i1, int i2);
 
+
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySequence_Size(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PySequence_Contains(IntPtr pointer, IntPtr item);
+        public static extern int PySequence_Contains(IntPtr pointer, IntPtr item);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PySequence_Concat(IntPtr pointer, IntPtr other);
+        public static extern IntPtr PySequence_Concat(IntPtr pointer, IntPtr other);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PySequence_Repeat(IntPtr pointer, int count);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PySequence_Index(IntPtr pointer, IntPtr item);
+        public static extern int PySequence_Index(IntPtr pointer, IntPtr item);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PySequence_Count(IntPtr pointer, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PySequence_Tuple(IntPtr pointer);
+        public static extern IntPtr PySequence_Tuple(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PySequence_List(IntPtr pointer);
+        public static extern IntPtr PySequence_List(IntPtr pointer);
 
 
         //====================================================================
         // Python string API
         //====================================================================
 
-        internal static bool IsStringType(IntPtr op)
+        public static bool IsStringType(IntPtr op)
         {
             IntPtr t = PyObject_TYPE(op);
             return (t == PyStringType) || (t == PyUnicodeType);
         }
 
-        internal static bool PyString_Check(IntPtr ob)
+        public static bool PyString_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyStringType;
         }
 
-        internal static IntPtr PyString_FromString(string value)
+        public static IntPtr PyString_FromString(string value)
         {
             return PyString_FromStringAndSize(value, value.Length);
         }
 
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyBytes_FromString(string op);
+        public static extern IntPtr PyBytes_FromString(string op);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyBytes_Size(IntPtr op);
 
-        internal static IntPtr PyBytes_AS_STRING(IntPtr ob)
+        public static IntPtr PyBytes_AS_STRING(IntPtr ob)
         {
             return ob + BytesOffset.ob_sval;
         }
@@ -1238,23 +1306,23 @@ namespace Python.Runtime
         internal static extern IntPtr PyString_FromStringAndSize(string value, int size);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyString_AsString(IntPtr op);
+        public static extern IntPtr PyString_AsString(IntPtr op);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyString_Size(IntPtr pointer);
+        public static extern int PyString_Size(IntPtr pointer);
 #endif
 
-        internal static bool PyUnicode_Check(IntPtr ob)
+        public static bool PyUnicode_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyUnicodeType;
         }
 
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyUnicode_FromObject(IntPtr ob);
+        public static extern IntPtr PyUnicode_FromObject(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
+        public static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyUnicode_FromKindAndData(
@@ -1272,18 +1340,18 @@ namespace Python.Runtime
         internal static extern int PyUnicode_GetSize(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
+        public static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyUnicode_FromOrdinal(int c);
+        public static extern IntPtr PyUnicode_FromOrdinal(int c);
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = PyUnicodeEntryPoint + "FromObject")]
-        internal static extern IntPtr PyUnicode_FromObject(IntPtr ob);
+        public static extern IntPtr PyUnicode_FromObject(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = PyUnicodeEntryPoint + "FromEncodedObject")]
-        internal static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
+        public static extern IntPtr PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = PyUnicodeEntryPoint + "FromUnicode")]
@@ -1298,14 +1366,14 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = PyUnicodeEntryPoint + "AsUnicode")]
-        internal static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
+        public static extern IntPtr PyUnicode_AsUnicode(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl,
             EntryPoint = PyUnicodeEntryPoint + "FromOrdinal")]
-        internal static extern IntPtr PyUnicode_FromOrdinal(int c);
+        public static extern IntPtr PyUnicode_FromOrdinal(int c);
 #endif
 
-        internal static IntPtr PyUnicode_FromString(string s)
+        public static IntPtr PyUnicode_FromString(string s)
         {
             return PyUnicode_FromUnicode(s, s.Length);
         }
@@ -1323,7 +1391,7 @@ namespace Python.Runtime
         /// </remarks>
         /// <param name="op">PyStringType or PyUnicodeType object to convert</param>
         /// <returns>Managed String</returns>
-        internal static string GetManagedString(IntPtr op)
+        public static string GetManagedString(IntPtr op)
         {
             IntPtr type = PyObject_TYPE(op);
 
@@ -1353,55 +1421,55 @@ namespace Python.Runtime
         // Python dictionary API
         //====================================================================
 
-        internal static bool PyDict_Check(IntPtr ob)
+        public static bool PyDict_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyDictType;
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_New();
+        public static extern IntPtr PyDict_New();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDictProxy_New(IntPtr dict);
+        public static extern IntPtr PyDictProxy_New(IntPtr dict);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_GetItem(IntPtr pointer, IntPtr key);
+        public static extern IntPtr PyDict_GetItem(IntPtr pointer, IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_GetItemString(IntPtr pointer, string key);
+        public static extern IntPtr PyDict_GetItemString(IntPtr pointer, string key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyDict_SetItem(IntPtr pointer, IntPtr key, IntPtr value);
+        public static extern int PyDict_SetItem(IntPtr pointer, IntPtr key, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyDict_SetItemString(IntPtr pointer, string key, IntPtr value);
+        public static extern int PyDict_SetItemString(IntPtr pointer, string key, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyDict_DelItem(IntPtr pointer, IntPtr key);
+        public static extern int PyDict_DelItem(IntPtr pointer, IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyDict_DelItemString(IntPtr pointer, string key);
+        public static extern int PyDict_DelItemString(IntPtr pointer, string key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyMapping_HasKey(IntPtr pointer, IntPtr key);
+        public static extern int PyMapping_HasKey(IntPtr pointer, IntPtr key);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Keys(IntPtr pointer);
+        public static extern IntPtr PyDict_Keys(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Values(IntPtr pointer);
+        public static extern IntPtr PyDict_Values(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Items(IntPtr pointer);
+        public static extern IntPtr PyDict_Items(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyDict_Copy(IntPtr pointer);
+        public static extern IntPtr PyDict_Copy(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyDict_Update(IntPtr pointer, IntPtr other);
+        public static extern int PyDict_Update(IntPtr pointer, IntPtr other);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyDict_Clear(IntPtr pointer);
+        public static extern void PyDict_Clear(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyDict_Size(IntPtr pointer);
@@ -1411,7 +1479,7 @@ namespace Python.Runtime
         // Python list API
         //====================================================================
 
-        internal static bool PyList_Check(IntPtr ob)
+        public static bool PyList_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyListType;
         }
@@ -1420,7 +1488,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyList_New(int size);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyList_AsTuple(IntPtr pointer);
+        public static extern IntPtr PyList_AsTuple(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyList_GetItem(IntPtr pointer, int index);
@@ -1432,13 +1500,13 @@ namespace Python.Runtime
         internal static extern int PyList_Insert(IntPtr pointer, int index, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyList_Append(IntPtr pointer, IntPtr value);
+        public static extern int PyList_Append(IntPtr pointer, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyList_Reverse(IntPtr pointer);
+        public static extern int PyList_Reverse(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyList_Sort(IntPtr pointer);
+        public static extern int PyList_Sort(IntPtr pointer);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr PyList_GetSlice(IntPtr pointer, int start, int end);
@@ -1454,7 +1522,7 @@ namespace Python.Runtime
         // Python tuple API
         //====================================================================
 
-        internal static bool PyTuple_Check(IntPtr ob)
+        public static bool PyTuple_Check(IntPtr ob)
         {
             return PyObject_TYPE(ob) == PyTupleType;
         }
@@ -1479,7 +1547,7 @@ namespace Python.Runtime
         // Python iterator API
         //====================================================================
 
-        internal static bool PyIter_Check(IntPtr pointer)
+        public static bool PyIter_Check(IntPtr pointer)
         {
             var ob_type = Marshal.ReadIntPtr(pointer, ObjectOffset.ob_type);
 #if PYTHON2
@@ -1492,7 +1560,7 @@ namespace Python.Runtime
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyIter_Next(IntPtr pointer);
+        public static extern IntPtr PyIter_Next(IntPtr pointer);
 
 
         //====================================================================
@@ -1500,47 +1568,47 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyModule_New(string name);
+        public static extern IntPtr PyModule_New(string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern string PyModule_GetName(IntPtr module);
+        public static extern string PyModule_GetName(IntPtr module);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyModule_GetDict(IntPtr module);
+        public static extern IntPtr PyModule_GetDict(IntPtr module);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern string PyModule_GetFilename(IntPtr module);
+        public static extern string PyModule_GetFilename(IntPtr module);
 
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyModule_Create2(IntPtr module, int apiver);
+        public static extern IntPtr PyModule_Create2(IntPtr module, int apiver);
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyImport_Import(IntPtr name);
+        public static extern IntPtr PyImport_Import(IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyImport_ImportModule(string name);
+        public static extern IntPtr PyImport_ImportModule(string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyImport_ReloadModule(IntPtr module);
+        public static extern IntPtr PyImport_ReloadModule(IntPtr module);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyImport_AddModule(string name);
+        public static extern IntPtr PyImport_AddModule(string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyImport_GetModuleDict();
+        public static extern IntPtr PyImport_GetModuleDict();
 
 #if PYTHON3
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PySys_SetArgvEx(
+        public static extern void PySys_SetArgvEx(
             int argc,
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrArrayMarshaler))] string[] argv,
             int updatepath
         );
 #elif PYTHON2
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PySys_SetArgvEx(
+        public static extern void PySys_SetArgvEx(
             int argc,
             string[] argv,
             int updatepath
@@ -1548,28 +1616,28 @@ namespace Python.Runtime
 #endif
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PySys_GetObject(string name);
+        public static extern IntPtr PySys_GetObject(string name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PySys_SetObject(string name, IntPtr ob);
+        public static extern int PySys_SetObject(string name, IntPtr ob);
 
 
         //====================================================================
         // Python type object API
         //====================================================================
 
-        internal static bool PyType_Check(IntPtr ob)
+        public static bool PyType_Check(IntPtr ob)
         {
             return PyObject_TypeCheck(ob, PyTypeType);
         }
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyType_Modified(IntPtr type);
+        public static extern void PyType_Modified(IntPtr type);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool PyType_IsSubtype(IntPtr t1, IntPtr t2);
+        public static extern bool PyType_IsSubtype(IntPtr t1, IntPtr t2);
 
-        internal static bool PyObject_TypeCheck(IntPtr ob, IntPtr tp)
+        public static bool PyObject_TypeCheck(IntPtr ob, IntPtr tp)
         {
             IntPtr t = PyObject_TYPE(ob);
             return (t == tp) || PyType_IsSubtype(t, tp);
@@ -1587,31 +1655,31 @@ namespace Python.Runtime
         internal static extern IntPtr PyType_GenericAlloc(IntPtr type, int n);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyType_Ready(IntPtr type);
+        public static extern int PyType_Ready(IntPtr type);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr _PyType_Lookup(IntPtr type, IntPtr name);
+        public static extern IntPtr _PyType_Lookup(IntPtr type, IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GenericGetAttr(IntPtr obj, IntPtr name);
+        public static extern IntPtr PyObject_GenericGetAttr(IntPtr obj, IntPtr name);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyObject_GenericSetAttr(IntPtr obj, IntPtr name, IntPtr value);
+        public static extern int PyObject_GenericSetAttr(IntPtr obj, IntPtr name, IntPtr value);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr _PyObject_GetDictPtr(IntPtr obj);
+        public static extern IntPtr _PyObject_GetDictPtr(IntPtr obj);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyObject_GC_New(IntPtr tp);
+        public static extern IntPtr PyObject_GC_New(IntPtr tp);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyObject_GC_Del(IntPtr tp);
+        public static extern void PyObject_GC_Del(IntPtr tp);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyObject_GC_Track(IntPtr tp);
+        public static extern void PyObject_GC_Track(IntPtr tp);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyObject_GC_UnTrack(IntPtr tp);
+        public static extern void PyObject_GC_UnTrack(IntPtr tp);
 
 
         //====================================================================
@@ -1625,7 +1693,7 @@ namespace Python.Runtime
         internal static extern IntPtr PyMem_Realloc(IntPtr ptr, int size);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyMem_Free(IntPtr ptr);
+        public static extern void PyMem_Free(IntPtr ptr);
 
 
         //====================================================================
@@ -1633,40 +1701,40 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_SetString(IntPtr ob, string message);
+        public static extern void PyErr_SetString(IntPtr ob, string message);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_SetObject(IntPtr ob, IntPtr message);
+        public static extern void PyErr_SetObject(IntPtr ob, IntPtr message);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyErr_SetFromErrno(IntPtr ob);
+        public static extern IntPtr PyErr_SetFromErrno(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_SetNone(IntPtr ob);
+        public static extern void PyErr_SetNone(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyErr_ExceptionMatches(IntPtr exception);
+        public static extern int PyErr_ExceptionMatches(IntPtr exception);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int PyErr_GivenExceptionMatches(IntPtr ob, IntPtr val);
+        public static extern int PyErr_GivenExceptionMatches(IntPtr ob, IntPtr val);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_NormalizeException(IntPtr ob, IntPtr val, IntPtr tb);
+        public static extern void PyErr_NormalizeException(IntPtr ob, IntPtr val, IntPtr tb);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int PyErr_Occurred();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_Fetch(ref IntPtr ob, ref IntPtr val, ref IntPtr tb);
+        public static extern void PyErr_Fetch(ref IntPtr ob, ref IntPtr val, ref IntPtr tb);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_Restore(IntPtr ob, IntPtr val, IntPtr tb);
+        public static extern void PyErr_Restore(IntPtr ob, IntPtr val, IntPtr tb);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_Clear();
+        public static extern void PyErr_Clear();
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void PyErr_Print();
+        public static extern void PyErr_Print();
 
 
         //====================================================================
@@ -1674,15 +1742,15 @@ namespace Python.Runtime
         //====================================================================
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyMethod_Self(IntPtr ob);
+        public static extern IntPtr PyMethod_Self(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr PyMethod_Function(IntPtr ob);
+        public static extern IntPtr PyMethod_Function(IntPtr ob);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Py_AddPendingCall(IntPtr func, IntPtr arg);
+        public static extern int Py_AddPendingCall(IntPtr func, IntPtr arg);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Py_MakePendingCalls();
+        public static extern int Py_MakePendingCalls();
     }
 }

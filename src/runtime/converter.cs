@@ -11,7 +11,7 @@ namespace Python.Runtime
     /// Performs data conversions between managed types and Python types.
     /// </summary>
     [SuppressUnmanagedCodeSecurity]
-    internal class Converter
+    public class Converter
     {
         private Converter()
         {
@@ -363,7 +363,7 @@ class GMT(tzinfo):
         /// Return a managed object for the given Python object, taking funny
         /// byref types into account.
         /// </summary>
-        internal static bool ToManaged(IntPtr value, Type type,
+        public static bool ToManaged(IntPtr value, Type type,
             out object result, bool setError)
         {
             if (type.IsByRef)

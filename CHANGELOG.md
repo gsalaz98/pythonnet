@@ -57,6 +57,7 @@ This document follows the conventions laid out in [Keep a CHANGELOG][].
 
 ### Changed
 -   PythonException included C# call stack
+-   improved performance of calls from Python to C#
 
 -   PythonException included C# call stack
 -   Reattach python exception traceback information (#545)

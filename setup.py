@@ -265,7 +265,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
         if DEVTOOLS == "MsDev15" or DEVTOOLS == "dotnet":
             subprocess.check_call(" ".join(cmd + ['"/t:Console:publish;Python_EmbeddingTest:publish"', "/p:TargetFramework=netcoreapp2.2"]), shell=use_shell)
-        if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
+        if DEVTOOLS == "Mono":
             self._build_monoclr()
         if DEVTOOLS == "dotnet":
             self._build_coreclr()

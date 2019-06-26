@@ -5,15 +5,15 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS2</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS2</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS2</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -23,6 +23,14 @@
 
   <ItemGroup>
     <EmbeddedResource Include="resources\clr.py" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(PythonInteropFile)' != ''">
+    <Compile Remove="interop27.cs" />
+    <Compile Remove="interop34.cs" />
+    <Compile Remove="interop35.cs" />
+    <Compile Remove="interop36.cs" />
+    <Compile Remove="interop37.cs" />
   </ItemGroup>
 
   <ItemGroup>

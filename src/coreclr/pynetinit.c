@@ -167,7 +167,7 @@ void init(PyNet_Args* pn_args)
         return;
     }
 
-    if (!GetClrFilesAbsolutePath(pn_args->entry_path, "/usr/share/dotnet/shared/Microsoft.NETCore.App/2.0.0", &pn_args->clr_path))
+    if (!GetClrFilesAbsolutePath(pn_args->entry_path, "/home/gerry/dotnet/shared/Microsoft.NETCore.App/2.0.0", &pn_args->clr_path))
     //if (!GetClrFilesAbsolutePath(pn_args->entry_path, NULL, &pn_args->clr_path)))
     {
         pn_args->error = "Unable to find clr path";

@@ -22,10 +22,10 @@ from setuptools import Extension, setup
 # Allow config/verbosity to be set from cli
 # http://stackoverflow.com/a/4792601/5208670
 CONFIG = "Release"  # Release or Debug
-VERBOSITY = "minimal"  # quiet, minimal, normal, detailed, diagnostic
+VERBOSITY = "normal"  # quiet, minimal, normal, detailed, diagnostic
 
 is_64bits = sys.maxsize > 2**32
-DEVTOOLS = "MsDev" if sys.platform == "win32" else "Mono"
+DEVTOOLS = "MsDev" if sys.platform == "win32" else "dotnet"
 ARCH = "x64" if is_64bits else "x86"
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
@@ -237,7 +237,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         elif DEVTOOLS == "dotnet":
             _xbuild = 'dotnet msbuild'
             _config = "{0}Mono".format(CONFIG)
-            _solution_file = 'pythonnet.15.sln'
+            _solution_file = 'pythonnet.sln'
             _custom_define_constants = True
         else:
             raise NotImplementedError(
@@ -264,7 +264,7 @@ class BuildExtPythonnet(build_ext.build_ext):
         subprocess.check_call(" ".join(cmd + ["/t:Clean"]), shell=use_shell)
         subprocess.check_call(" ".join(cmd + ["/t:Build"]), shell=use_shell)
         if DEVTOOLS == "MsDev15" or DEVTOOLS == "dotnet":
-            subprocess.check_call(" ".join(cmd + ['"/t:Console_15:publish;Python_EmbeddingTest_15:publish"', "/p:TargetFramework=netcoreapp2.0"]), shell=use_shell)
+            subprocess.check_call(" ".join(cmd + ['"/t:Console:publish;Python_EmbeddingTest:publish"', "/p:TargetFramework=netcoreapp2.2"]), shell=use_shell)
         if DEVTOOLS == "Mono" or DEVTOOLS == "dotnet":
             self._build_monoclr()
 
@@ -316,7 +316,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             elif DEVTOOLS == "dotnet":
                 _config = "{0}Mono".format(CONFIG)
 
-            cmd = "dotnet msbuild /t:Restore pythonnet.15.sln /p:Configuration={0} /p:Platform={1}".format(_config, ARCH)
+            cmd = "dotnet msbuild /t:Restore pythonnet.sln /p:Configuration={0} /p:Platform={1}".format(_config, ARCH)
             self.debug_print("Updating packages with xplat: {0}".format(cmd))
             subprocess.check_call(cmd, shell=use_shell)
         else:

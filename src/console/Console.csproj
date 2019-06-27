@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp2.2;netcoreapp3.0</TargetFrameworks>
+    <TargetName>nPython</TargetName>
     <AssemblyName>nPython</AssemblyName>
   </PropertyGroup>
 

@@ -2,19 +2,26 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  <PropertyGroup>
+    <IsWindows>false</IsWindows>
+    <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+    <IsOSX>false</IsOSX>
+    <IsOSX Condition="'$(IsWindows)' != 'true' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
+    <IsLinux>false</IsLinux>
+    <IsLinux Condition="'$(IsWindows)' != 'true' AND '$(IsOSX)' != 'true' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+
+  <PropertyGroup Condition="$(IsWindows)">
     <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS2</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  <PropertyGroup Condition="$(IsOSX)">
+    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(IsLinux)">
+    <DefineConstants>PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,6 +6,10 @@
     <Optimize>true</Optimize>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
+    <PackageId>pythonnetcoreclr</PackageId>
+    <Version>2.0.0.0</Version>
+    <Authors>pythonnet team, Gerardo Salazar, et al.</Authors>
+    <RuntimeIdentifiers>win-x86;win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <PropertyGroup>

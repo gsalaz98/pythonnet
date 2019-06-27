@@ -4,6 +4,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -22,27 +24,31 @@
     <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(IsLinux)'=='true'">
-    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release|AnyCPU' AND '$(IsWindows)'=='true'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU' AND '$(IsWindows)'=='true'">
     <DefineConstants>PYTHON3;PYTHON36;UCS2</DefineConstants>
     <Optimize>true</Optimize>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release' AND '$(IsOSX)'=='true'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU' AND '$(IsOSX)'=='true'">
     <DefineConstants>PYTHON3;PYTHON36;UCS4</DefineConstants>
     <Optimize>true</Optimize>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release' AND '$(IsLinux)'=='true'">
-    <DefineConstants>PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU' AND '$(IsLinux)'=='true'">
+    <DefineConstants>PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
     <Optimize>true</Optimize>
   </PropertyGroup>
-
-
-  <PropertyGroup Condition="$(IsOSX)">
-    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' AND '$(IsWindows)'=='true'">
+    <DefineConstants>PYTHON3;PYTHON36;UCS2</DefineConstants>
+    <Optimize>true</Optimize>
   </PropertyGroup>
-  <PropertyGroup Condition="$(IsLinux)">
-    <DefineConstants>PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' AND '$(IsOSX)'=='true'">
+    <DefineConstants>PYTHON3;PYTHON36;UCS4</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' AND '$(IsLinux)'=='true'">
+    <DefineConstants>PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC;MONO_LINUX</DefineConstants>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
@@ -54,16 +60,27 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(PythonInteropFile)' != ''">
-    <Compile Remove="interop27.cs" />
-    <Compile Remove="interop34.cs" />
-    <Compile Remove="interop35.cs" />
-    <Compile Remove="interop36.cs" />
-    <Compile Remove="interop37.cs" />
+    <Compile Remove="interop27.cs" Condition="'$(PythonInteropFile)' != 'interop27.cs'" />
+    <Compile Remove="interop34.cs" Condition="'$(PythonInteropFile)' != 'interop34.cs'" />
+    <Compile Remove="interop35.cs" Condition="'$(PythonInteropFile)' != 'interop35.cs'" />
+    <Compile Remove="interop36.cs" Condition="'$(PythonInteropFile)' != 'interop36.cs'" />
+    <Compile Remove="interop36m.cs" Condition="'$(PythonInteropFile)' != 'interop36m.cs'" />
+    <Compile Remove="interop37.cs" Condition="'$(PythonInteropFile)' != 'interop37.cs'" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(PythonInteropFile)' == ''">
+    <Compile Remove="interop36m.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     <PackageReference Include="System.Security.Permissions" Version="4.5.0" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <CopyPythonRuntime Include="$(TargetDir)\*" />
+  </ItemGroup>
+  <Target Name="PostBuildCopy" AfterTargets="CoreCompile">
+    <Copy SourceFiles="@(CopyPythonRuntime)" DestinationFolder="$(PythonBuildDir)" />
+  </Target>
 
 </Project>

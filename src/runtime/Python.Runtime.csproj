@@ -15,9 +15,29 @@
     <IsLinux Condition="'$(IsWindows)' != 'true' AND '$(IsOSX)' != 'true' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(IsWindows)">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(IsWindows)'=='true'">
     <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS2</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(IsOSX)'=='true'">
+    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU' AND '$(IsLinux)'=='true'">
+    <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release|AnyCPU' AND '$(IsWindows)'=='true'">
+    <DefineConstants>PYTHON3;PYTHON36;UCS2</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release' AND '$(IsOSX)'=='true'">
+    <DefineConstants>PYTHON3;PYTHON36;UCS4</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release' AND '$(IsLinux)'=='true'">
+    <DefineConstants>PYTHON3;PYTHON36;UCS4;PYTHON_WITH_PYMALLOC</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+
   <PropertyGroup Condition="$(IsOSX)">
     <DefineConstants>DEBUG;TRACE;PYTHON3;PYTHON36;UCS4</DefineConstants>
   </PropertyGroup>

@@ -25,7 +25,7 @@ CONFIG = "Release"  # Release or Debug
 VERBOSITY = "normal"  # quiet, minimal, normal, detailed, diagnostic
 
 is_64bits = sys.maxsize > 2**32
-DEVTOOLS = "MsDev" if sys.platform == "win32" else "dotnet"
+DEVTOOLS = "dotnet"
 ARCH = "x64" if is_64bits else "x86"
 PY_MAJOR = sys.version_info[0]
 PY_MINOR = sys.version_info[1]
@@ -236,7 +236,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             _custom_define_constants = False
         elif DEVTOOLS == "dotnet":
             _xbuild = 'dotnet msbuild'
-            _config = "{0}Mono".format(CONFIG)
+            _config = "{0}".format(CONFIG)
             _solution_file = 'pythonnet.sln'
             _custom_define_constants = True
         else:
@@ -267,7 +267,7 @@ class BuildExtPythonnet(build_ext.build_ext):
             subprocess.check_call(" ".join(cmd + ['"/t:Console:publish;Python_EmbeddingTest:publish"', "/p:TargetFramework=netcoreapp2.2"]), shell=use_shell)
         if DEVTOOLS == "Mono":
             self._build_monoclr()
-        if DEVTOOLS == "dotnet":
+        if DEVTOOLS == "dotnet" and sys.platform != "win32":
             self._build_coreclr()
 
     def _get_manifest(self, build_dir):

@@ -7,7 +7,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <PythonBuildDir Condition=" '$(PythonBuildDir)' == '' ">$(SolutionDir)\bin\</PythonBuildDir>
     <PackageId>pythonnetcoreclr</PackageId>
-    <Version>2.0.0.0</Version>
+    <Version>2.0.4</Version>
     <Authors>pythonnet team, Gerardo Salazar, et al.</Authors>
     <RuntimeIdentifiers>win-x86;win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
@@ -57,6 +57,9 @@
 
   <ItemGroup>
     <None Remove="resources\clr.py" />
+    <None Include="bin\runtimes\win-x64\lib\netstandard2.0\**" Pack="true" PackagePath="lib\win\netstandard2.0" />
+    <None Include="bin\runtimes\osx-x64\lib\netstandard2.0\**" Pack="true" PackagePath="lib\osx\netstandard2.0" />
+    <None Include="bin\runtimes\linux-x64\lib\netstandard2.0\**" Pack="true" PackagePath="lib\linux\netstandard2.0" />
   </ItemGroup>
 
   <ItemGroup>

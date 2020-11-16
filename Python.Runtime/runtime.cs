@@ -124,8 +124,8 @@ namespace Python.Runtime
         {
             if (Py_IsInitialized() == 0)
             {
-                Console.WriteLine("Runtime.Initialize(): Py_InitializeEx...");
-                Py_InitializeEx(initSigs ? 1 : 0);
+                Console.WriteLine("Runtime.Initialize(): Py_Initialize...");
+                Py_Initialize();
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
 
@@ -136,12 +136,6 @@ namespace Python.Runtime
             }
 
             IsFinalizing = false;
-
-            GenericUtil.Reset();
-            PyScopeManager.Reset();
-            ClassManager.Reset();
-            ClassDerivedObject.Reset();
-            TypeManager.Reset();
 
             Console.WriteLine("Runtime.Initialize(): Initialize types...");
             IntPtr op;
@@ -311,6 +305,53 @@ namespace Python.Runtime
             AssemblyManager.UpdatePath();
         }
 
+        /// <summary>
+        /// Initializes the data about platforms.
+        ///
+        /// This must be the last step when initializing the runtime:
+        /// GetManagedString needs to have the cached values for types.
+        /// But it must run before initializing anything outside the runtime
+        /// because those rely on the platform data.
+        /// </summary>
+        private static void InitializePlatformData()
+        {
+            IntPtr op;
+            IntPtr fn;
+            IntPtr platformModule = PyImport_ImportModule("platform");
+            IntPtr emptyTuple = PyTuple_New(0);
+
+            fn = PyObject_GetAttrString(platformModule, "system");
+            op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
+            OperatingSystemName = GetManagedString(op);
+            XDecref(op);
+            XDecref(fn);
+
+            fn = PyObject_GetAttrString(platformModule, "machine");
+            op = PyObject_Call(fn, emptyTuple, IntPtr.Zero);
+            MachineName = GetManagedString(op);
+            XDecref(op);
+            XDecref(fn);
+
+            XDecref(emptyTuple);
+            XDecref(platformModule);
+
+            // Now convert the strings into enum values so we can do switch
+            // statements rather than constant parsing.
+            OperatingSystemType OSType;
+            if (!OperatingSystemTypeMapping.TryGetValue(OperatingSystemName, out OSType))
+            {
+                OSType = OperatingSystemType.Other;
+            }
+            OperatingSystem = OSType;
+
+            MachineType MType;
+            if (!MachineTypeMapping.TryGetValue(MachineName.ToLower(), out MType))
+            {
+                MType = MachineType.Other;
+            }
+            Machine = MType;
+        }
+
         internal static void Shutdown()
         {
             AssemblyManager.Shutdown();
@@ -406,11 +447,11 @@ namespace Python.Runtime
 
         internal static IntPtr ExtendTuple(IntPtr t, params IntPtr[] args)
         {
-            int size = PyTuple_Size(t);
+            var size = PyTuple_Size(t);
             int add = args.Length;
             IntPtr item;
 
-            IntPtr items = PyTuple_New(size + add);
+            IntPtr items = PyTuple_New((int)size + add);
             for (var i = 0; i < size; i++)
             {
                 item = PyTuple_GetItem(t, i);
@@ -422,7 +463,7 @@ namespace Python.Runtime
             {
                 item = args[n];
                 XIncref(item);
-                PyTuple_SetItem(items, size + n, item);
+                PyTuple_SetItem(items, (int)size + n, item);
             }
 
             return items;
@@ -449,7 +490,7 @@ namespace Python.Runtime
                 free = true;
             }
 
-            int n = PyTuple_Size(args);
+            var n = PyTuple_Size(args);
             var types = new Type[n];
             Type t = null;
 
@@ -1200,6 +1241,7 @@ namespace Python.Runtime
             return PyUnicode_FromKindAndData(_UCS, value, value.Length);
 #else
             return PyString_FromStringAndSize(value, value.Length);
+#endif
         }
 
 #if !PYTHON2
@@ -1478,6 +1520,8 @@ namespace Python.Runtime
             return (long)_PyList_Size(pointer);
         }
 
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "PyList_Size")]
+        private static extern IntPtr _PyList_Size(IntPtr pointer);
 
         //====================================================================
         // Python tuple API

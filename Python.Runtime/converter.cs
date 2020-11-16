@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -180,17 +181,17 @@ class GMT(tzinfo):
 
             if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
             {
-                using (var resultList = new PyList())
+                using (var resultlist = new PyList())
                 {
-                    for (var i = 0; i < list.Count; i++)
+                    foreach (object o in (IEnumerable)value)
                     {
-                        using (var p = list[i].ToPython())
+                        using (var p = new PyObject(ToPython(o, o?.GetType())))
                         {
-                            resultList.Append(p);
+                            resultlist.Append(p);
                         }
                     }
-                    Runtime.XIncref(resultList.Handle);
-                    return resultList.Handle;
+                    Runtime.XIncref(resultlist.Handle);
+                    return resultlist.Handle;
                 }
             }
 
@@ -1046,8 +1047,12 @@ class GMT(tzinfo):
         private static bool ToArray(IntPtr value, Type obType, out object result, bool setError)
         {
             Type elementType = obType.GetElementType();
-            int size = Runtime.PySequence_Size(value);
             result = null;
+
+            bool IsSeqObj = Runtime.PySequence_Check(value);
+            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
+
+            IntPtr IterObject = Runtime.PyObject_GetIter(value);
 
             if (elementType.IsGenericType)
             {
@@ -1083,6 +1088,67 @@ class GMT(tzinfo):
 
             items = Array.CreateInstance(elementType, list.Count);
             list.CopyTo(items, 0);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Convert a Python value to a correctly typed managed list instance.
+        /// The Python value must support the Python sequence protocol and the
+        /// items in the sequence must be convertible to the target list type.
+        /// </summary>
+        private static bool ToList(IntPtr value, Type obType, out object result, bool setError)
+        {
+            var elementType = obType.GetGenericArguments()[0];
+            var size = Runtime.PySequence_Size(value);
+
+            result = Activator.CreateInstance(obType, args: size);
+            var resultList = (IList)result;
+            return ApplyActionToPySequence(value, obType, setError, (int)size, elementType, o => resultList.Add(o));
+        }
+
+        /// <summary>
+        /// Helper method that will enumerate a Python sequence convert its values to the given
+        /// type and send them to the provided action
+        /// </summary>
+        private static bool ApplyActionToPySequence(IntPtr value,
+            Type obType,
+            bool setError,
+            int size,
+            Type elementType,
+            Action<object> action)
+        {
+            if (size < 0)
+            {
+                if (setError)
+                {
+                    SetConversionError(value, obType);
+                }
+                return false;
+            }
+
+            for (var i = 0; i < size; i++)
+            {
+                object obj = null;
+                IntPtr item = Runtime.PySequence_GetItem(value, i);
+                if (item == IntPtr.Zero)
+                {
+                    if (setError)
+                    {
+                        SetConversionError(value, obType);
+                        return false;
+                    }
+                }
+
+                if (!Converter.ToManaged(item, elementType, out obj, true))
+                {
+                    Runtime.XDecref(item);
+                    return false;
+                }
+
+                action(obj);
+                Runtime.XDecref(item);
+            }
 
             return true;
         }

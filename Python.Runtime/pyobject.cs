@@ -27,7 +27,7 @@ namespace Python.Runtime
         /// Trace stack for PyObject's construction
         /// </summary>
         public StackTrace Traceback { get; private set; }
-#endif  
+#endif
 
         protected internal IntPtr obj = IntPtr.Zero;
         private bool disposed = false;
@@ -200,11 +200,6 @@ namespace Python.Runtime
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
-        public IntPtr[] GetTrackedHandles()
-        {
-            return new IntPtr[] { obj };
-	}
 
         /// <summary>
         /// Unsafe Dispose Method.
@@ -633,13 +628,13 @@ namespace Python.Runtime
         /// </remarks>
         public virtual int Length()
         {
-            int s = Runtime.PyObject_Size(obj);
+            var s = Runtime.PyObject_Size(obj);
             if (s < 0)
             {
                 Runtime.PyErr_Clear();
                 return 0;
             }
-            return s;
+            return (int)s;
         }
 
 

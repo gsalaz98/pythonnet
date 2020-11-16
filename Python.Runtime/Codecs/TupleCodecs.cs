@@ -28,7 +28,7 @@ namespace Python.Runtime.Codecs
             if (!this.CanEncode(tupleType)) return null;
             if (tupleType == typeof(TTuple)) return new PyTuple();
 
-            long fieldCount = tupleType.GetGenericArguments().Length;
+            var fieldCount = tupleType.GetGenericArguments().Length;
             var tuple = Runtime.PyTuple_New(fieldCount);
             Exceptions.ErrorCheck(tuple);
             int fieldIndex = 0;

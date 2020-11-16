@@ -17,6 +17,7 @@ namespace Python.Runtime
     internal class MethodBinder
     {
         private List<MethodInformation> list;
+        public MethodBase[] methods;
         public bool init = false;
         public bool allow_threads = true;
 
@@ -159,15 +160,16 @@ namespace Python.Runtime
         /// is arranged in order of precedence (done lazily to avoid doing it
         /// at all for methods that are never called).
         /// </summary>
-        internal List<MethodInformation> GetMethods()
+        internal MethodBase[] GetMethods()
         {
             if (!init)
             {
                 // I'm sure this could be made more efficient.
                 list.Sort(new MethodSorter());
+                methods = (MethodBase[]) list.Select(x => x.MethodBase).ToArray();
                 init = true;
             }
-            return list;
+            return methods;
         }
 
         /// <summary>
@@ -327,8 +329,7 @@ namespace Python.Runtime
             // TODO: Clean up
             foreach (var methodInformation in methods)
             {
-                var mi = methodInformation.MethodBase;
-                var pi = methodInformation.ParameterInfo;
+                var mi = methodInformation;
 
                 if (mi.IsGenericMethod)
                 {
@@ -681,7 +682,7 @@ namespace Python.Runtime
                 long argCount = Runtime.PyTuple_Size(args);
                 value.Append(": (");
                 for(long argIndex = 0; argIndex < argCount; argIndex++) {
-                    var arg = Runtime.PyTuple_GetItem(args, argIndex);
+                    var arg = Runtime.PyTuple_GetItem(args, (int)argIndex);
                     if (arg != IntPtr.Zero) {
                         var type = Runtime.PyObject_Type(arg);
                         if (type != IntPtr.Zero) {

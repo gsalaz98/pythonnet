@@ -169,7 +169,7 @@ namespace Python.Runtime
         internal static void UpdatePath()
         {
             IntPtr list = Runtime.PySys_GetObject("path");
-            int count = Runtime.PyList_Size(list);
+            var count = Runtime.PyList_Size(list);
             var sep = Path.DirectorySeparatorChar;
 
             if (count != pypath.Count)

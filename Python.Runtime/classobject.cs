@@ -230,11 +230,11 @@ namespace Python.Runtime
             }
 
             // Get the args passed in.
-            int i = Runtime.PyTuple_Size(args);
+            var i = Runtime.PyTuple_Size(args);
             IntPtr defaultArgs = cls.indexer.GetDefaultArgs(args);
-            int numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
-            int temp = i + numOfDefaultArgs;
-            IntPtr real = Runtime.PyTuple_New(temp + 1);
+            var numOfDefaultArgs = Runtime.PyTuple_Size(defaultArgs);
+            var temp = i + numOfDefaultArgs;
+            IntPtr real = Runtime.PyTuple_New((int)temp + 1);
             for (var n = 0; n < i; n++)
             {
                 IntPtr item = Runtime.PyTuple_GetItem(args, n);
@@ -247,7 +247,7 @@ namespace Python.Runtime
             {
                 IntPtr item = Runtime.PyTuple_GetItem(defaultArgs, n);
                 Runtime.XIncref(item);
-                Runtime.PyTuple_SetItem(real, n + i, item);
+                Runtime.PyTuple_SetItem(real, (int)(n + i), item);
             }
             // no longer need defaultArgs
             Runtime.XDecref(defaultArgs);
@@ -255,7 +255,7 @@ namespace Python.Runtime
 
             // Add value to argument list
             Runtime.XIncref(v);
-            Runtime.PyTuple_SetItem(real, i, v);
+            Runtime.PyTuple_SetItem(real, (int)i, v);
 
             try
             {

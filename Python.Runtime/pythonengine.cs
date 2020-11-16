@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -237,6 +237,11 @@ namespace Python.Runtime
             }
         }
 
+        static void OnDomainUnload(object _, EventArgs __)
+        {
+            Shutdown();
+        }
+
         /// <summary>
         /// A helper to perform initialization from the context of an active
         /// CPython interpreter process - this bootstraps the managed runtime
@@ -354,6 +359,69 @@ namespace Python.Runtime
             }
         }
 
+        /// <summary>
+        /// Called when the engine is shut down.
+        ///
+        /// Shutdown handlers are run in reverse order they were added, so that
+        /// resources available when running a shutdown handler are the same as
+        /// what was available when it was added.
+        /// </summary>
+        public delegate void ShutdownHandler();
+
+        static List<ShutdownHandler> ShutdownHandlers = new List<ShutdownHandler>();
+
+        /// <summary>
+        /// Add a function to be called when the engine is shut down.
+        ///
+        /// Shutdown handlers are executed in the opposite order they were
+        /// added, so that you can be sure that everything that was initialized
+        /// when you added the handler is still initialized when you need to shut
+        /// down.
+        ///
+        /// If the same shutdown handler is added several times, it will be run
+        /// several times.
+        ///
+        /// Don't add shutdown handlers while running a shutdown handler.
+        /// </summary>
+        public static void AddShutdownHandler(ShutdownHandler handler)
+        {
+            ShutdownHandlers.Add(handler);
+        }
+
+        /// <summary>
+        /// Remove a shutdown handler.
+        ///
+        /// If the same shutdown handler is added several times, only the last
+        /// one is removed.
+        ///
+        /// Don't remove shutdown handlers while running a shutdown handler.
+        /// </summary>
+        public static void RemoveShutdownHandler(ShutdownHandler handler)
+        {
+            for (int index = ShutdownHandlers.Count - 1; index >= 0; --index)
+            {
+                if (ShutdownHandlers[index] == handler)
+                {
+                    ShutdownHandlers.RemoveAt(index);
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Run all the shutdown handlers.
+        ///
+        /// They're run in opposite order they were added.
+        /// </summary>
+        static void ExecuteShutdownHandlers()
+        {
+            while(ShutdownHandlers.Count > 0)
+            {
+                var handler = ShutdownHandlers[ShutdownHandlers.Count - 1];
+                ShutdownHandlers.RemoveAt(ShutdownHandlers.Count - 1);
+                handler();
+            }
+        }
 
         /// <summary>
         /// AcquireLock Method

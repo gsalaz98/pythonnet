@@ -96,6 +96,11 @@ namespace Python.Runtime
             // includes types, delegates, enums, interfaces and structs.
             // Only public namespace members are exposed to Python.
             type = AssemblyManager.LookupTypes(qname).FirstOrDefault(t => t.IsPublic);
+            if (type?.Assembly.FullName.Contains("QuantConnect.Fxcm") == true)
+            {
+                return null;
+            }
+
             if (type != null)
             {
                 c = ClassManager.GetClass(type);

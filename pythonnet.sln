@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Test.Helper", "Pytho
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Test.Performance", "Python.Test.Performance\Python.Test.Performance.csproj", "{A232F9F5-3A03-431F-8863-0BA177D650BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python.Loader", "Python.Loader\Python.Loader.csproj", "{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +74,17 @@ Global
 		{A232F9F5-3A03-431F-8863-0BA177D650BA}.Release|x64.Build.0 = Release|Any CPU
 		{A232F9F5-3A03-431F-8863-0BA177D650BA}.Release|x86.ActiveCfg = Release|Any CPU
 		{A232F9F5-3A03-431F-8863-0BA177D650BA}.Release|x86.Build.0 = Release|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Debug|x64.Build.0 = Debug|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Debug|x86.Build.0 = Debug|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Release|x64.ActiveCfg = Release|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Release|x64.Build.0 = Release|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Release|x86.ActiveCfg = Release|Any CPU
+		{308AF35B-9EA0-4D8C-833E-A2E7B48324D0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

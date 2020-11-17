@@ -179,19 +179,20 @@ class GMT(tzinfo):
                 }
             }
 
-            if (value is IList && !(value is INotifyPropertyChanged) && value.GetType().IsGenericType)
+            var list = value as IList;
+            if (list != null && value.GetType().IsGenericType)
             {
-                using (var resultlist = new PyList())
+                using (var resultList = new PyList())
                 {
-                    foreach (object o in (IEnumerable)value)
+                    for (var i = 0; i < list.Count; i++)
                     {
-                        using (var p = new PyObject(ToPython(o, o?.GetType())))
+                        using (var p = list[i].ToPython())
                         {
-                            resultlist.Append(p);
+                            resultList.Append(p);
                         }
                     }
-                    Runtime.XIncref(resultlist.Handle);
-                    return resultlist.Handle;
+                    Runtime.XIncref(resultList.Handle);
+                    return resultList.Handle;
                 }
             }
 
@@ -1047,12 +1048,8 @@ class GMT(tzinfo):
         private static bool ToArray(IntPtr value, Type obType, out object result, bool setError)
         {
             Type elementType = obType.GetElementType();
+            var size = Runtime.PySequence_Size(value);
             result = null;
-
-            bool IsSeqObj = Runtime.PySequence_Check(value);
-            var len = IsSeqObj ? Runtime.PySequence_Size(value) : -1;
-
-            IntPtr IterObject = Runtime.PyObject_GetIter(value);
 
             if (elementType.IsGenericType)
             {
@@ -1063,33 +1060,15 @@ class GMT(tzinfo):
                 return false;
             }
 
-            Array items;
+            Array items = Array.CreateInstance(elementType, size);
 
-            var listType = typeof(List<>);
-            var constructedListType = listType.MakeGenericType(elementType);
-            IList list = IsSeqObj ? (IList) Activator.CreateInstance(constructedListType, new Object[] {(int) len}) :
-                                        (IList) Activator.CreateInstance(constructedListType);
-            IntPtr item;
+            var index = 0;
 
-            while ((item = Runtime.PyIter_Next(IterObject)) != IntPtr.Zero)
+            result = items;
+            return ApplyActionToPySequence(value, obType, setError, (int)size, elementType, o =>
             {
-                object obj = null;
-
-                if (!Converter.ToManaged(item, elementType, out obj, true))
-                {
-                    Runtime.XDecref(item);
-                    return false;
-                }
-
-                list.Add(obj);
-                Runtime.XDecref(item);
-            }
-            Runtime.XDecref(IterObject);
-
-            items = Array.CreateInstance(elementType, list.Count);
-            list.CopyTo(items, 0);
-
-            return true;
+                items.SetValue(o, index++);
+            });
         }
 
         /// <summary>

@@ -10,6 +10,8 @@ namespace Python.Loader
             if (libraryName == "__Internal") {
 
             }
+
+            return IntPtr.Zero;
         }
 
     }

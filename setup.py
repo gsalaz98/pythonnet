@@ -39,7 +39,7 @@ class BuildDotnet(Command):
             opts.append("--configuration")
             opts.append(self.dotnet_config)
 
-            self.spawn(["dotnet", "publish", lib.path] + opts)
+            self.spawn(["dotnet", "publish", lib.path] + opts + ['-p:DefineConstants=PYTHON3'])
 
 
 class bdist_wheel_patched(bdist_wheel):
@@ -62,7 +62,6 @@ setup(
     author="The Python for .Net developers",
     author_email="pythondotnet@python.org",
     long_description=long_description,
-    license="MIT",
     install_requires=["clr-loader"],
     zip_safe=False,
     classifiers=[

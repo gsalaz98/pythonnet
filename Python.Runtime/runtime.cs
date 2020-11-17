@@ -41,7 +41,7 @@ namespace Python.Runtime
         private const string PyUnicodeEntryPoint = "PyUnicodeUCS2_";
 #endif
 
-        internal const string _PythonDll = "__Internal";
+        internal const string _PythonDll = "python36.dll";
 
         // set to true when python is finalizing
         internal static object IsFinalizingLock = new object();
@@ -120,12 +120,12 @@ namespace Python.Runtime
         /// <summary>
         /// Initialize the runtime...
         /// </summary>
-        internal static void Initialize()
+        internal static void Initialize(bool initSigs = false)
         {
             if (Py_IsInitialized() == 0)
             {
-                Console.WriteLine("Runtime.Initialize(): Py_Initialize...");
-                Py_Initialize();
+                Console.WriteLine("Runtime.Initialize(): Py_InitializeEx...");
+                Py_InitializeEx(initSigs ? 1 : 0);
                 MainManagedThreadId = Thread.CurrentThread.ManagedThreadId;
             }
 
@@ -136,6 +136,12 @@ namespace Python.Runtime
             }
 
             IsFinalizing = false;
+
+            GenericUtil.Reset();
+            PyScopeManager.Reset();
+            ClassManager.Reset();
+            ClassDerivedObject.Reset();
+            TypeManager.Reset();
 
             Console.WriteLine("Runtime.Initialize(): Initialize types...");
             IntPtr op;
@@ -274,7 +280,7 @@ namespace Python.Runtime
             InitializePlatformData();
 
             IntPtr dllLocal = IntPtr.Zero;
-            var loader = LibraryLoader.Get(OperatingSystem);
+            var loader = LibraryLoader.Get(IsWindows ? OperatingSystemType.Windows : OperatingSystemType.Linux);
 
             if (_PythonDll != "__Internal")
             {
@@ -588,6 +594,9 @@ namespace Python.Runtime
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void Py_Initialize();
+
+        [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void Py_InitializeEx(int initsigs);
 
         [DllImport(_PythonDll, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int Py_IsInitialized();

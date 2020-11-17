@@ -20,6 +20,11 @@ namespace Python.Runtime
             mapping = new Dictionary<string, Dictionary<string, List<string>>>();
         }
 
+        public static void Reset()
+        {
+            mapping = new Dictionary<string, Dictionary<string, List<string>>>();
+        }
+
         /// <summary>
         /// Register a generic type that appears in a given namespace.
         /// </summary>

@@ -164,7 +164,7 @@ namespace Python.Runtime
         /// first call. It is *not* necessary to hold the Python global
         /// interpreter lock (GIL) to call this method.
         /// </remarks>
-        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true)
+        public static void Initialize(IEnumerable<string> args, bool setSysArgv = true, bool initSigs = false)
         {
             if (!initialized)
             {
@@ -175,9 +175,24 @@ namespace Python.Runtime
                 // This is probably masking some bad mojo happening somewhere in Runtime.Initialize().
                 delegateManager = new DelegateManager();
                 Console.WriteLine("PythonEngine.Initialize(): Runtime.Initialize()...");
-                Runtime.Initialize();
+                Runtime.Initialize(initSigs);
                 initialized = true;
                 Exceptions.Clear();
+
+                // Make sure we clean up properly on app domain unload.
+                AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+
+                // Remember to shut down the runtime.
+                AddShutdownHandler(Runtime.Shutdown);
+
+                // The global scope gets used implicitly quite early on, remember
+                // to clear it out when we shut down.
+                AddShutdownHandler(PyScopeManager.Global.Clear);
+
+                if (setSysArgv)
+                {
+                    Py.SetArgv(args);
+                }
 
                 if (setSysArgv)
                 {
